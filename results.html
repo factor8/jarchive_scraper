@@ -1,0 +1,2932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J-Archive Scraper Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --header-bg: #1e3a8a;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --accent-gold: #fbbf24;
+            --border-color: #334155;
+            --stripe-bg: rgba(255, 255, 255, 0.03);
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        h1 {
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 0;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .search-box {
+            margin-bottom: 30px;
+        }
+        .form-control {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 12px;
+        }
+        .form-control:focus {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+        }
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .table-responsive {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: var(--card-bg);
+        }
+        
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--text-primary);
+            --bs-table-striped-bg: var(--stripe-bg);
+            --bs-table-striped-color: var(--text-primary);
+            margin-bottom: 0;
+            border-color: var(--border-color);
+        }
+        
+        .table thead th {
+            background-color: var(--header-bg);
+            border-bottom: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            padding: 16px;
+            color: #fff;
+        }
+        
+        .table tbody td {
+            padding: 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .category-name {
+            font-weight: 700;
+            color: #60a5fa; /* Light blue */
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        .clue-value {
+            color: var(--accent-gold);
+            font-weight: 800;
+            font-size: 1.2rem;
+            font-family: 'Georgia', serif; /* Slight nod to classic feel */
+        }
+        
+        .clue-text {
+            font-size: 1rem;
+            line-height: 1.5;
+            text-transform: none;
+            font-weight: normal;
+            text-shadow: none;
+        }
+        
+        .answer-text {
+            color: var(--text-secondary);
+            font-family: monospace;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-style: normal;
+        }
+        
+        .badge {
+            background-color: var(--accent-gold) !important;
+            color: #000;
+            font-weight: 600;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Jeopardy! Clues</h1>
+            <span class="badge bg-primary" id="totalBadge">Total: 300</span>
+        </div>
+
+        <div class="row mb-4 g-3">
+            <div class="col-md-4">
+                <label class="form-label text-secondary small text-uppercase fw-bold">Search Everything</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="Keywords...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-secondary small text-uppercase fw-bold">Filter by Episode</label>
+                <select id="episodeFilter" class="form-select form-control">
+                    <option value="all">All Episodes</option>
+                    
+                    <option value="6895">#6895 (2014-08-01)</option>
+                    
+                    <option value="6894">#6894 (2014-07-31)</option>
+                    
+                    <option value="6893">#6893 (2014-07-30)</option>
+                    
+                    <option value="6892">#6892 (2014-07-29)</option>
+                    
+                    <option value="6891">#6891 (2014-07-28)</option>
+                    
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-secondary small text-uppercase fw-bold">Filter by Round</label>
+                <select id="roundFilter" class="form-select form-control">
+                    <option value="all">All Rounds</option>
+                    <option value="J">Jeopardy!</option>
+                    <option value="DJ">Double Jeopardy!</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered" id="cluesTable">
+                <thead>
+                    <tr>
+                        <th>Ep</th>
+                        <th>Category</th>
+                        <th>Value</th>
+                        <th>Clue</th>
+                        <th>Answer</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MOUNTAINS</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Boulder, Colorado is in the Flatiron Range, part of these mountains</td>
+                        <td class="answer-text">the Rockies</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE ARTS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">Donatello sculpted a marble statue of this biblical youth almost 100 years before Michelangelo</td>
+                        <td class="answer-text">David</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">WANNA DANCE?</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Dances with repetitive names include the cancan & this lively Cuban dance</td>
+                        <td class="answer-text">cha-cha</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">1950-2000</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">In 1972 terrorism by a group of Palestinians marred the Olympic Games in this German city</td>
+                        <td class="answer-text">Munich</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">WANNA DANCE?</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">A pair of quick steps are followed by a pair of slow ones in the dance called the Texas this</td>
+                        <td class="answer-text">two-step</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ANTHROPOLOGY</td>
+                        <td class="clue-value">DD: $3,000</td>
+                        <td class="clue-text">Elsie Parsons studied these "apartment"-dwelling Indians of the Southwest, including the Zuni</td>
+                        <td class="answer-text">Pueblos</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">3-LETTER WORDS WITH 2 VOWELS</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">It's a singing twosome</td>
+                        <td class="answer-text">duo</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ANTHROPOLOGY</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">"Bougie", slang for upscale or snobby, comes from this class described by Karl Marx</td>
+                        <td class="answer-text">bourgeoisie</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">3-LETTER WORDS WITH 2 VOWELS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">In a fairy tale, a princess can feel it through 20 mattresses</td>
+                        <td class="answer-text">pea</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ANTHROPOLOGY</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Lewis Morgan said we've progressed "from savagery through barbarism to" this sophisticated stage</td>
+                        <td class="answer-text">civilization</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">3-LETTER WORDS WITH 2 VOWELS</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">The last class of the day seems to last this long, the longest division of geologic time</td>
+                        <td class="answer-text">an eon</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ANTHROPOLOGY</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">A classic work of cultural anthropology is antonymically titled this "and the Cooked"</td>
+                        <td class="answer-text">The Raw</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">3-LETTER WORDS WITH 2 VOWELS</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Hold your horses & give me this synonym for sadness</td>
+                        <td class="answer-text">woe</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ANTHROPOLOGY</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">In 1925 she set out for the South Pacific to study adolescent girls</td>
+                        <td class="answer-text">Margaret Mead</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">3-LETTER WORDS WITH 2 VOWELS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">A mineral deposit from which metal can be extracted</td>
+                        <td class="answer-text">ore</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">A FEW WORDS WITH "MOM" & "DAD"</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">For very low temperatures, these may use magnets instead of mercury</td>
+                        <td class="answer-text">thermometers</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">INTERNET JARGON</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">"GTG" can mean "good to go" or this parting phrase</td>
+                        <td class="answer-text">got to go</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">A FEW WORDS WITH "MOM" & "DAD"</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Name of a city in southern Colorado as well as Tobago's partner island</td>
+                        <td class="answer-text">Trinidad</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">INTERNET JARGON</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">In "kk", the first K replaces this letter</td>
+                        <td class="answer-text">O</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">A FEW WORDS WITH "MOM" & "DAD"</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">Look out, this type of small family store, here comes Walmart</td>
+                        <td class="answer-text">mom-and-pop</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">INTERNET JARGON</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Someone who types "sup" to you is contracting these 2 words</td>
+                        <td class="answer-text">what's up</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">A FEW WORDS WITH "MOM" & "DAD"</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">A relaxing type of herbal tea from celestial seasonings</td>
+                        <td class="answer-text">chamomile</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MOUNTAINS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">What the Arabs call Jebel Musa, "Mountain of Moses", is better known as this</td>
+                        <td class="answer-text">(Mount) Sinai</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE ARTS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">This city's pops is affectionately known as "America's Orchestra"</td>
+                        <td class="answer-text">Boston</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">INTERNET JARGON</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Writer Adam Gopnik was among parents who made their kids snicker by thinking "LOL" meant this, not "laugh out loud"</td>
+                        <td class="answer-text">lots of love</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">A FEW WORDS WITH "MOM" & "DAD"</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Meaning "city", this word comes before "Juarez" & "de Mexico"</td>
+                        <td class="answer-text">Ciudad</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE STORY OF HIS LIFE</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">"A Journey" (maybe a short one on a speed skating track)</td>
+                        <td class="answer-text">(Apolo Anton) Ohno</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MUSIC INDUSTRY TERMS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Incorporating part of an old song into a new song, or trying a free piece of cheese at the deli</td>
+                        <td class="answer-text">sampling</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE STORY OF HIS LIFE</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">An actor turned politician:"Total Recall"</td>
+                        <td class="answer-text">(Arnold) Schwarzenegger</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MUSIC INDUSTRY TERMS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">If your iPod display reads "Drake f/ Majid Jordan", the f/ stands for this</td>
+                        <td class="answer-text">featuring</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE STORY OF HIS LIFE</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">An electrical genius from Europe:"My Inventions"</td>
+                        <td class="answer-text">Tesla</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MUSIC INDUSTRY TERMS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">An album that sells 10 million copies is certified this gem</td>
+                        <td class="answer-text">diamond</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE STORY OF HIS LIFE</td>
+                        <td class="clue-value">DD: $2,000</td>
+                        <td class="clue-text">A Pennsylvania businessman:"Young Chocolatier"</td>
+                        <td class="answer-text">Hershey</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MUSIC INDUSTRY TERMS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">"AC" stands for this radio format favored by some folks of a certain age</td>
+                        <td class="answer-text">adult contemporary</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE STORY OF HIS LIFE</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">A playwright:"The Kindness of Strangers"</td>
+                        <td class="answer-text">Tennessee Williams</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MUSIC INDUSTRY TERMS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">A songwriter can make money writing these; they are brief catchy tunes to sell cars, tissues or prunes</td>
+                        <td class="answer-text">jingle</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ATTACK OF THE MOVIE MONSTERS</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">"Jaws", about one of these sea creatures, kept lots of folks out of the water</td>
+                        <td class="answer-text">a (great white) shark</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">SYMPTOMS OF LOVE</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">One symptom of love is a loss of this, the desire for food</td>
+                        <td class="answer-text">appetite</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ATTACK OF THE MOVIE MONSTERS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">You can see this monster from Egypt's past in a film from back in 1932 or at Universal Studios</td>
+                        <td class="answer-text">the Mummy</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">SYMPTOMS OF LOVE</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Xerostomia means a dry one of these; try not to put your foot in yours when you talk to your crush</td>
+                        <td class="answer-text">mouth</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ATTACK OF THE MOVIE MONSTERS</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">"AVP" is short for "Alien vs." it</td>
+                        <td class="answer-text">Predator</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">SYMPTOMS OF LOVE</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Forms of this abnormality of the heartbeat include "skipping a beat", fibrillation & tachycardia, beating too fast</td>
+                        <td class="answer-text">arrhythmia</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ATTACK OF THE MOVIE MONSTERS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">This lovestruck giant ape ends up far from Skull Island, his home</td>
+                        <td class="answer-text">King Kong</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">SYMPTOMS OF LOVE</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">Poor coordination & tingling--could be love or a lack of thiamine, also called this alphanumeric vitamin</td>
+                        <td class="answer-text">B1</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MOUNTAINS</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">You must be 42" tall to hop on this Disneyland ride; its 14,692-foot namesake in the Pennine Alps is tougher sledding</td>
+                        <td class="answer-text">Matterhorn</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE ARTS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">At the Louvre, 16th century Italian tapestries depict scenes from this poet's "Metamorphoses"</td>
+                        <td class="answer-text">Ovid</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">ATTACK OF THE MOVIE MONSTERS</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Abe Sapien helps this well-"red" guy who went from the Dark Side to working for our side</td>
+                        <td class="answer-text">Hellboy</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">SYMPTOMS OF LOVE</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">When your beloved is near, you hear the 1824 "Ode to Joy" by this composer</td>
+                        <td class="answer-text">Beethoven</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MOUNTAINS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">This peak is the only mountain in North America that exceeds 20,000 feet</td>
+                        <td class="answer-text">Mount McKinley</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE ARTS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">December is a good time to see this 1892 ballet that features the Sugar Plum Fairy</td>
+                        <td class="answer-text">The Nutcracker</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">MOUNTAINS</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Not quite 14,500 feet, this California peak is named for geologist Josiah</td>
+                        <td class="answer-text">Mount Whitney</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">THE ARTS</td>
+                        <td class="clue-value">DD: $4,000</td>
+                        <td class="clue-text">Praise the Lord! Over a century old, this American form of Christian music combines elements of blues, jazz & spirituals</td>
+                        <td class="answer-text">gospel</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">INTERNET JARGON</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Meaning "I approve", "coo" is short for this; saving 1 keystroke adds up</td>
+                        <td class="answer-text">cool</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">1950-2000</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">He's the president seen here signing into law the Civil Rights Act of 1964</td>
+                        <td class="answer-text">Lyndon Johnson</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">WANNA DANCE?</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">It's said that "it takes two to" do this dance that evolved in Buenos Aires</td>
+                        <td class="answer-text">tango</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">1950-2000</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">In the early '80s it was sometimes called "GRID", gay-related immune deficiency</td>
+                        <td class="answer-text">AIDS</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">WANNA DANCE?</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">This dance that was popular in the 1920s is named for a city in South Carolina</td>
+                        <td class="answer-text">Charleston</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">1950-2000</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">(Sarah of the Clue Crew shows a map on the monitor.)  On the morning of June 25th, 1950, forces in the north stormed across the 38th parallel, beginning this 3-year-long conflict</td>
+                        <td class="answer-text">the Korean War</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="J">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">WANNA DANCE?</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Polite society was shocked to see couples in close contact for this ballroom dance that has a Viennese type</td>
+                        <td class="answer-text">waltz</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6895" data-dj="DJ">
+                        <td class="small text-secondary">#6895</td>
+                        <td class="category-name">1950-2000</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">This senator from Wisconsin is best remembered for his Communist "witch hunts" of the 1950s</td>
+                        <td class="answer-text">(Joseph) McCarthy</td>
+                        <td class="small text-secondary">2014-08-01</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">YOU WISH YOU'D READ THE SCARLET LETTER</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Of R, A or K, it's what the letter is</td>
+                        <td class="answer-text">A</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">EXPLORATION</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">This river was Lewis & Clark's main pathway west from St. Louis</td>
+                        <td class="answer-text">Missouri</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">STATE'S LEFTS</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">To the left of Kansas</td>
+                        <td class="answer-text">Colorado</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">WORD ORIGINS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">A word for "throat" gives us the name of this type of carved figure, like the guy seen here</td>
+                        <td class="answer-text">gargoyle</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">DESCRIBING THE RECENT MOVIE</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">There's no queen like snow queen; Sven the non-red-nosed reindeer</td>
+                        <td class="answer-text">Frozen</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">BEFORE HE WAS PRESIDENT</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">He accepted Robert E. Lee's surrender at Appomattox Court House</td>
+                        <td class="answer-text">Grant</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">DESCRIBING THE RECENT MOVIE</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Alabama at sea; makes me rethink a trip to Somalia</td>
+                        <td class="answer-text">Captain Phillips</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">BEFORE HE WAS PRESIDENT</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">He was a law professor at the University of Arkansas</td>
+                        <td class="answer-text">Clinton</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">DESCRIBING THE RECENT MOVIE</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Tina Fey: "Clooney would rather float away... & die than spend one more minute with a woman his own age"</td>
+                        <td class="answer-text">Gravity</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">BEFORE HE WAS PRESIDENT</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">He commanded PT-109</td>
+                        <td class="answer-text">Kennedy</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">DESCRIBING THE RECENT MOVIE</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Lee Daniels' White House film; Lee Daniels' look at U.S. history; "Lee Daniels"' this</td>
+                        <td class="answer-text">The Butler</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">BEFORE HE WAS PRESIDENT</td>
+                        <td class="clue-value">DD: $3,000</td>
+                        <td class="clue-text">He was Thomas Jefferson's Secretary of State</td>
+                        <td class="answer-text">Madison</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">DESCRIBING THE RECENT MOVIE</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">J.J. Abrams, an enterprise-ing director; Pike's Peak; Khaaaaaaaaan!</td>
+                        <td class="answer-text">Star Trek Into Darkness</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">BEFORE HE WAS PRESIDENT</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">He served as Tennessee's first U.S. representative</td>
+                        <td class="answer-text">Andrew Jackson</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">INSIDE INFORMATION</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">A flat boat made by tying together long pieces of wood</td>
+                        <td class="answer-text">raft</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MEDICAL HISTORY</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">In 1980 this medical organization, the W.H.O., announced that smallpox had been eradicated worldwide</td>
+                        <td class="answer-text">World Health Organization</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">INSIDE INFORMATION</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Insect that can be carpenter or army</td>
+                        <td class="answer-text">ant</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MEDICAL HISTORY</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Around 1747 British navy doctor James Lind discovered that eating these could prevent scurvy</td>
+                        <td class="answer-text">citrus fruits</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">INSIDE INFORMATION</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">It's a Canadian province</td>
+                        <td class="answer-text">Ontario</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MEDICAL HISTORY</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">In 1897 Felix Hoffmann first synthesized this wondrous pain reliever</td>
+                        <td class="answer-text">aspirin</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">INSIDE INFORMATION</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">The first of Isaac Newton's 3 laws of this is the law of inertia</td>
+                        <td class="answer-text">motion</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MEDICAL HISTORY</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">In 1982 Dr. William DeVries implanted the Jarvik-7, one of these, into patient Barney Clark</td>
+                        <td class="answer-text">artificial heart</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">YOU WISH YOU'D READ THE SCARLET LETTER</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">The evil Roger Chillingworth practices this profession making use of herbs & roots</td>
+                        <td class="answer-text">doctor</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">EXPLORATION</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">This conquistador overthrew the Aztec Empire for the crown of Spain</td>
+                        <td class="answer-text">Cortés</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">INSIDE INFORMATION</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">To swoon</td>
+                        <td class="answer-text">faint</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MEDICAL HISTORY</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Using identical twins, Dr. Joseph Murray performed the first of these organ transplants in 1954</td>
+                        <td class="answer-text">kidney</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">SWEET CHARITY</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">modestneeds.org helps with "small, emergency grants to low-income workers...at risk of slipping into" this 7-letter word</td>
+                        <td class="answer-text">poverty</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MONEY</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">This country's peso is the most traded Latin American currency</td>
+                        <td class="answer-text">Mexico</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">SWEET CHARITY</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">gradesofgreen.org, helping kids learn to be eco-friendly, launched its site in 2010 on this "Day", an event that began in 1970</td>
+                        <td class="answer-text">Earth Day</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MONEY</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Most of these bills showing Ben Franklin are held in other countries</td>
+                        <td class="answer-text">hundreds</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">SWEET CHARITY</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">This foundation lived up to its name in helping turn S.F. into Gotham City so a young leukemia patient could become Batkid</td>
+                        <td class="answer-text">Make-A-Wish</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MONEY</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">The Bank of Japan in Tokyo maintains a museum devoted to the history of this currency</td>
+                        <td class="answer-text">yen</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">SWEET CHARITY</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Despite the troubles of its cyclist founder, this .org is still doing good work helping people fight cancer</td>
+                        <td class="answer-text">Livestrong</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MONEY</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">Some notes of this British currency have holograms that switch from a picture of Britannia to the value of the note</td>
+                        <td class="answer-text">pound</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">SWEET CHARITY</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">At michaeljfox.org, "Our single, urgent goal: eliminate" this neurological disease "in our lifetime"</td>
+                        <td class="answer-text">Parkinson's</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">MONEY</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Some say Satoshi Nakamoto, creator of this virtual currency, doesn't exist</td>
+                        <td class="answer-text">bitcoin</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">JOURNALISM</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">(James Risen of The New York Times delivers the clue.) Though it's gotten me a couple of subpoenas, my protection of my anonymous sources stems from my faith in this constitutional amendment</td>
+                        <td class="answer-text">First Amendment</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">THIS CELEBRITY...</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Ended his "Tonight Show" run (again) on Feb. 6, 2014</td>
+                        <td class="answer-text">Jay Leno</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">JOURNALISM</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">"The Journalist's Bible" is the AP stylebook; AP is short for this oldest news-gathering agency in the United States</td>
+                        <td class="answer-text">Associated Press</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">THIS CELEBRITY...</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">"The Slim Reaper", scored 54 for OKC in a 2014 NBA game</td>
+                        <td class="answer-text">(Kevin) Durant</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">JOURNALISM</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">(New York Times legal columnist Linda Greenhouse delivers the clue.) I don't often interview Supreme Court justices; to write my articles I usually read these formal statements containing the reasoning & principles of law behind judicial decisions</td>
+                        <td class="answer-text">opinions</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">THIS CELEBRITY...</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">Wore a bag over his head that read "I am not famous anymore" at a film premiere</td>
+                        <td class="answer-text">Shia LaBeouf</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">JOURNALISM</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">A "nut graf" gives the essentials of a story; "graf" is short for this</td>
+                        <td class="answer-text">paragraph</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">THIS CELEBRITY...</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">Has no degrees of separation playing ex-FBI agent Ryan Hardy on "The Following"</td>
+                        <td class="answer-text">Kevin Bacon</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">YOU WISH YOU'D READ THE SCARLET LETTER</td>
+                        <td class="clue-value">DD: $1,000</td>
+                        <td class="clue-text">This Christian group is called "the most intolerant brood that ever lived"</td>
+                        <td class="answer-text">Puritans</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">EXPLORATION</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">In 1516 he disassembled his ships on the Atlantic side of Panama & reassembled them on the Pacific side</td>
+                        <td class="answer-text">Balboa</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">JOURNALISM</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">(New York Times reporter Andrea Elliott delivers the clue.)  Just 8 years after getting my degree from this university's Graduate School of Journalism, I won one of the Pulitzer Prizes that the school administers</td>
+                        <td class="answer-text">Columbia</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">THIS CELEBRITY...</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">In 2014 got an alternative-album Grammy nomination & graced the stages of "Conan" & Coachella</td>
+                        <td class="answer-text">Neko Case</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">YOU WISH YOU'D READ THE SCARLET LETTER</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Referring to the guilt-ridden Rev. Dimmesdale, Chapter 20 has the alliterative title "The Minister in" this labyrinth</td>
+                        <td class="answer-text">the Maze</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">EXPLORATION</td>
+                        <td class="clue-value">DD: $2,000</td>
+                        <td class="clue-text">In 1892, 17 years before his North Pole fame, Robert Peary proved this was an island, not part of a continent</td>
+                        <td class="answer-text">Greenland</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">YOU WISH YOU'D READ THE SCARLET LETTER</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">She's Hester's sometimes mischievous daughter</td>
+                        <td class="answer-text">Pearl</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">EXPLORATION</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">In his 60s in 1633, this "father of New France" made his last voyage from old France to Quebec</td>
+                        <td class="answer-text">(Samuel de) Champlain</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">STATE'S LEFTS</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">To the left of Indiana</td>
+                        <td class="answer-text">Illinois</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">WORD ORIGINS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">This other word for a graduation ceremony comes from the Latin for "to begin"</td>
+                        <td class="answer-text">commencement</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">STATE'S LEFTS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">To the left of Maine</td>
+                        <td class="answer-text">New Hampshire</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">WORD ORIGINS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">The conversation between play characters, it's from Greek words for "across" & "speech"</td>
+                        <td class="answer-text">dialogue</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">STATE'S LEFTS</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">To the left of Montana</td>
+                        <td class="answer-text">Idaho</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">WORD ORIGINS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">This liquid portion of blood gets its name from the Greek for "to mold"</td>
+                        <td class="answer-text">plasma</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="J">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">STATE'S LEFTS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">To the left of Rhode Island</td>
+                        <td class="answer-text">Connecticut</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6894" data-dj="DJ">
+                        <td class="small text-secondary">#6894</td>
+                        <td class="category-name">WORD ORIGINS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">This ban, as on trade, comes from the Spanish for "to hinder"</td>
+                        <td class="answer-text">embargo</td>
+                        <td class="small text-secondary">2014-07-31</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">COUNTRY NICKNAMES</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">"The Great White North"</td>
+                        <td class="answer-text">Canada</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">TV THROWBACK</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">On PBS Jay Jay was one of these</td>
+                        <td class="answer-text">a jet plane</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">MYTHOLOGY</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">She wasn't just the Greek goddess of the rainbow--she personified it, too</td>
+                        <td class="answer-text">Iris</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">DOUBLE Ws</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">The official timeout coming a certain time before the end of a football half</td>
+                        <td class="answer-text">the two-minute warning</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">POP CULTURE</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">The video game "Tomb Raider: Definitive Edition" is the origin story of this woman</td>
+                        <td class="answer-text">Lara Croft</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">DOUBLE Ws</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">A skiing maneuver, or an implement used to clear away the white stuff</td>
+                        <td class="answer-text">a snowplow</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">POP CULTURE</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">The course of the Disney 5K Family Fun Run takes participants through this future world theme park</td>
+                        <td class="answer-text">Epcot</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">DOUBLE Ws</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Time to reap this, aka a dust devil</td>
+                        <td class="answer-text">the whirlwind</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">POP CULTURE</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">More than 100,000 people signed a petition asking President Obama to deport this young Canadian</td>
+                        <td class="answer-text">Justin Bieber</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">GIMME SOME MATH!</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">It's the base 10 logarithm of 10,000</td>
+                        <td class="answer-text">4</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">POP CULTURE</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Peter Capaldi replaced Matt Smith as the Time Lord on this British TV series</td>
+                        <td class="answer-text">Doctor Who</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">GIMME SOME MATH!</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">It's the radius of the circle x2 + y2 = 100</td>
+                        <td class="answer-text">10</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">POP CULTURE</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">It's the group heard here"So let me ho-o-o-o-ld / Both your hands / In the holes of my sweater"</td>
+                        <td class="answer-text">The Neighbourhood</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">GIMME SOME MATH!</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">(Jimmy of the Clue Crew shows a graph on the monitor.)  In Cartesian geometry, the y coordinate of a point is called the ordinate--the x coordinate is called this, from Latin for "cut off"</td>
+                        <td class="answer-text">the abscissa</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">IN THE DICTIONARY</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">From the Greek for "words", it's a dictionary, or the vocabulary of a particular field</td>
+                        <td class="answer-text">a lexicon</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">QUOTATIONS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">The ancient Greek playwright Sophocles wrote that this "eases all things"; we've also heard that it heals all wounds</td>
+                        <td class="answer-text">time</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">IN THE DICTIONARY</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">To pluralize "chateau", you can add an "s" or this letter</td>
+                        <td class="answer-text">an "x"</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">QUOTATIONS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">It's the "here" in the 1863 line "Those who here gave their lives that that nation might live"</td>
+                        <td class="answer-text">Gettysburg</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">IN THE DICTIONARY</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Dating from the late 1970s, it means to subcontract services to another company, often in another nation</td>
+                        <td class="answer-text">outsource</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">QUOTATIONS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">This Roman began a book, "All Gaul" (which he'd just conquered) "is divided into three parts"</td>
+                        <td class="answer-text">(Julius) Caesar</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">IN THE DICTIONARY</td>
+                        <td class="clue-value">DD: $3,800</td>
+                        <td class="clue-text">The picture seen here might accompany the entry for this word found under the letter "P"</td>
+                        <td class="answer-text">pyrotechnics</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">QUOTATIONS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">This mid-20th century First Lady said, "No one can make you feel inferior without your consent"</td>
+                        <td class="answer-text">Eleanor Roosevelt</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">COUNTRY NICKNAMES</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">"The Tear Drop of India"</td>
+                        <td class="answer-text">Sri Lanka</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">GIMME SOME MATH!</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">There's no defense for not knowing this term for a 5-sided polygon</td>
+                        <td class="answer-text">a pentagon</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">IN THE DICTIONARY</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">The "con" in contrail, a visible trail of vapor created by an airplane, is short for this</td>
+                        <td class="answer-text">condensation</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">QUOTATIONS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">In 1776 he wrote, "These are the times that try men's souls"</td>
+                        <td class="answer-text">Thomas Paine</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">VACATION!</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">On the interstate when there's not a lot of traffic, Dad uses this alliterative speed management system</td>
+                        <td class="answer-text">cruise control</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">THE LAW</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Protective is another term for this court order saying, stay away from a specified person</td>
+                        <td class="answer-text">a restraining order</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">VACATION!</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">If you want to pitch your tent in a national park, Yosemite has 13 of these areas; Alaska's Gates of the Arctic, 0</td>
+                        <td class="answer-text">campgrounds</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">THE LAW</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">This term for teaching puppy to poop outside is also a legal synonym for burglary</td>
+                        <td class="answer-text">housebreaking</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">VACATION!</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Before "Over Georgia" or "Great America", this name means fun until you drop</td>
+                        <td class="answer-text">Six Flags</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">THE LAW</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">A curator ad litem may represent the interests of someone who's very young & even those who haven't been this yet</td>
+                        <td class="answer-text">born</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">VACATION!</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">This "Royal" company's Allure of the Seas is 3 football fields long</td>
+                        <td class="answer-text">Royal Caribbean</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">THE LAW</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">The Magna Carta mentions the right to be judged by these people of the same legal status as you, perhaps by a jury of them</td>
+                        <td class="answer-text">peers</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">VACATION!</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Everybody into the motorhome, also called by this 2-letter term (& it's not "MH")</td>
+                        <td class="answer-text">RV</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">THE LAW</td>
+                        <td class="clue-value">DD: $5,000</td>
+                        <td class="clue-text">Marbury v. Madison marked the first time that a federal law had been ruled this 16-letter term</td>
+                        <td class="answer-text">unconstitutional</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">WHAT DO YOU WANT ON YOUR PIZZA?</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Seasoned with the black & red spice in its name, this Italian salami is also an appetizer</td>
+                        <td class="answer-text">pepperoni</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">CREATIVE WRITERS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Mark Twain created this title character also found in "Huckleberry Finn"</td>
+                        <td class="answer-text">Tom Sawyer</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">WHAT DO YOU WANT ON YOUR PIZZA?</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">The "true" type of this small, silvery & salt-cured fish comes only from the Mediterranean & nearby waters</td>
+                        <td class="answer-text">anchovy</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">CREATIVE WRITERS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Anthony Horowitz created this teen spy found in books like "Snakehead"</td>
+                        <td class="answer-text">Alex Rider</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">WHAT DO YOU WANT ON YOUR PIZZA?</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Many forms of wild these are poisonous, but puffball & shiitake are okay to chow down</td>
+                        <td class="answer-text">mushrooms</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">CREATIVE WRITERS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">George Orwell created this "Police" force that sound like they even read your mind</td>
+                        <td class="answer-text">the Thought Police</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">WHAT DO YOU WANT ON YOUR PIZZA?</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Andouille is this meat product of which you could say that's the wurst</td>
+                        <td class="answer-text">sausage</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">CREATIVE WRITERS</td>
+                        <td class="clue-value">DD: $2,600</td>
+                        <td class="clue-text">He created Edmond Dantes but based him on falsely accused Francois Picaud</td>
+                        <td class="answer-text">Alexandre Dumas</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">COUNTRY NICKNAMES</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">There are about 30 million people in this "Land of the Incas"</td>
+                        <td class="answer-text">Peru</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">TV THROWBACK</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">In 2003 Chuckie & this gang of kids found themselves "All Grown Up!"</td>
+                        <td class="answer-text">the Rugrats</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">WHAT DO YOU WANT ON YOUR PIZZA?</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">On Newman's Own Four Cheese, the quartet is mozzarella, cheddar, asiago & this popular cheese</td>
+                        <td class="answer-text">Parmesan</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">CREATIVE WRITERS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">For a play, he created Rosmersholm, a manor house in west Norway</td>
+                        <td class="answer-text">Ibsen</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">COUNTRY NICKNAMES</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">UBS is a bank based in this land, "The World's Piggy Bank"</td>
+                        <td class="answer-text">Switzerland</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">GIMME SOME MATH!</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Euclid came up with the first proof that there are an infinite number of these integers with only 2 positive divisors</td>
+                        <td class="answer-text">prime numbers</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">COUNTRY NICKNAMES</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Fierce Pashtun fighters help make it the "Graveyard of Empires"</td>
+                        <td class="answer-text">Afghanistan</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">TV THROWBACK</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">The Olsen twins, Mary-Kate & Ashley, got their start on TV playing Michelle Tanner on this sitcom</td>
+                        <td class="answer-text">Full House</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">MYTHOLOGY</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">One of his labors was cleaning the stables of King Augeas</td>
+                        <td class="answer-text">Hercules</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">TV THROWBACK</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">Before hooking up with Joey, Melissa Joan Hart played this title gal with magical powers</td>
+                        <td class="answer-text">Sabrina the Teenage Witch</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">MYTHOLOGY</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">This sea god was often depicted holding a trident</td>
+                        <td class="answer-text">Poseidon</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">TV THROWBACK</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">The Diffy family from the year 2121 had to adjust to living in the present on this Disney series</td>
+                        <td class="answer-text">Phil of the Future</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">MYTHOLOGY</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">This goddess of wisdom had an unusual parentage-- no mom, just sprang full grown out of Zeus' head</td>
+                        <td class="answer-text">Athena</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">DOUBLE Ws</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Rhyming name for the main business section of a city</td>
+                        <td class="answer-text">downtown</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="J">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">MYTHOLOGY</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">He made wax wings so he & his son Icarus could escape Crete; a great plan in theory, but...</td>
+                        <td class="answer-text">Daedalus</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6893" data-dj="DJ">
+                        <td class="small text-secondary">#6893</td>
+                        <td class="category-name">DOUBLE Ws</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">One who hides aboard a ship to obtain a free ride</td>
+                        <td class="answer-text">a stowaway</td>
+                        <td class="small text-secondary">2014-07-30</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">OLD TESTAMENT HEROES</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">"When the Queen of Sheba heard of" his fame, "she came to prove him with hard questions"</td>
+                        <td class="answer-text">Solomon</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEENS RULE</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Evidence suggests that this boy king had malaria, perhaps why he died around age 18</td>
+                        <td class="answer-text">King Tutankhamen</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">"MAC" OR "P.C."</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Latin phrase meaning "for each person", as in "Americans eat 85 pounds of chicken..."</td>
+                        <td class="answer-text">per capita</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">SOUTH AMERICA</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Ecuador is the primary source for this light wood used to make model airplanes</td>
+                        <td class="answer-text">balsa</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPLETE THE LYRIC</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Demi Lovato:"'Cause our love was made, made in the ____"</td>
+                        <td class="answer-text">"U.S.A."</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">SOUTH AMERICA</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">Most of the precipitation that comes to this 600-mile-long desert is fog that blows in from the Pacific Ocean</td>
+                        <td class="answer-text">the Atacama Desert</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPLETE THE LYRIC</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Of Monsters & Men: "There's  an old voice in my head that's holding me back /Tell her that I miss our ____ ____"</td>
+                        <td class="answer-text">"little talks"</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">SOUTH AMERICA</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">The name of this country comes from the Latin for silver</td>
+                        <td class="answer-text">Argentina</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEEN CHOICE</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">It's the title of Adele's debut album</td>
+                        <td class="answer-text">19</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">SOUTH AMERICA</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">This 1,700-mile-long Venezuelan river is home to piranhas, electric eels & 20-foot crocodiles</td>
+                        <td class="answer-text">the Orinoco</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPLETE THE LYRIC</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Bruno Mars: "Treasure, that is what you are, Honey, you're my ____ ____"</td>
+                        <td class="answer-text">golden star</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">CROSSWORD CLUES "Q"</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Wharf(4)</td>
+                        <td class="answer-text">a quay</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPLETE THE LYRIC</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">fun.:"This is it boys,This is ____ --What are we waiting for?"</td>
+                        <td class="answer-text">"war"</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">CROSSWORD CLUES "Q"</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">Little birdie seen here(5)</td>
+                        <td class="answer-text">a quail</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPLETE THE LYRIC</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Paramore:"Yeah, after all this time I'm still ____ ____"</td>
+                        <td class="answer-text">"into you"</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">4-SYLLABLE WORDS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">This adjective means pertaining to the Earth</td>
+                        <td class="answer-text">terrestrial</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEEN CHOICE</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Age mentioned in the 26th Amendment</td>
+                        <td class="answer-text">18</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">4-SYLLABLE WORDS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Territory over which a court's authority is exercised</td>
+                        <td class="answer-text">jurisdiction</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEEN CHOICE</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Number of nights in a fortnight</td>
+                        <td class="answer-text">14</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">GRAPHIC NOVEL ADAPTATIONS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">He bested the 7 evil exes to win Ramona's heart on page & screen</td>
+                        <td class="answer-text">Scott Pilgrim</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEEN CHOICE</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">The first point of a tennis game</td>
+                        <td class="answer-text">15</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">POETS & POETRY</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">He began a famous poem, "I celebrate myself, and sing myself"</td>
+                        <td class="answer-text">Walt Whitman</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">OLD TESTAMENT HEROES</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">When a chariot of fire appeared, this prophet went up into heaven</td>
+                        <td class="answer-text">Elijah</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEENS RULE</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Wudi, who became emperor around age 16, made this school of philosophy the state religion of China</td>
+                        <td class="answer-text">Confucianism</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEEN CHOICE</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">In Italy, it's considered unlucky; fear of it is sometimes called heptakaidekaphobia</td>
+                        <td class="answer-text">17</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">POETS & POETRY</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">This "Death Be Not Proud" poet was considered the greatest of England's metaphysical poets</td>
+                        <td class="answer-text">John Donne</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">AT THE GEORGIA AQUARIUM</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">(Sarah, start us off.) Hundreds of individual whale sharks have been identified due to their unique pattern of spots, which act like these oldest human biometrics, used since the 1880s</td>
+                        <td class="answer-text">fingerprints</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">CROSSWORD CLUES "Q"</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">William Penn's religion(6)</td>
+                        <td class="answer-text">Quaker</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">AT THE GEORGIA AQUARIUM</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">(Jimmy of the Clue Crew reports from the Georgia Aquarium.)  The manta ray is generally harmless to humans, despite weighing up to 2 tons and having more than 300 rows of teeth, but because their cephalic lobes look like horns, they're known by this satanic name</td>
+                        <td class="answer-text">devil rays</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">POETS & POETRY</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">"The Weary Blues" was the first volume of poetry by this leading figure of the Harlem Renaissance</td>
+                        <td class="answer-text">Langston Hughes</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">AT THE GEORGIA AQUARIUM</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">(Sarah, of the Clue Crew reports from the Georgia Aquarium.)  Able to turn their heads up, down, & side to side, belugas can more easily catch prey as a result of these not being fused in their necks</td>
+                        <td class="answer-text">vertebrae</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">4-SYLLABLE WORDS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">A verb meaning to transform from liquid to gas</td>
+                        <td class="answer-text">evaporate</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPUTER STUFF</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">A single processor sharing multiple jobs is doing this, like when Mom tries to drive & put on makeup</td>
+                        <td class="answer-text">multitasking</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">GRAPHIC NOVEL ADAPTATIONS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">"Stardust" & "Coraline" are but 2 of this author's works that have made it as books, graphic novels & movies</td>
+                        <td class="answer-text">Neil Gaiman</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPUTER STUFF</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">imgur.com has a button to make this four-letter cultural reference that often spreads online</td>
+                        <td class="answer-text">a meme</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">GRAPHIC NOVEL ADAPTATIONS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">In 2006 a graphic novel was created in order to boost interest in what would become this 2011 sci-fi western with Daniel Craig</td>
+                        <td class="answer-text">Cowboys & Aliens</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPUTER STUFF</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">A class in school, or a record of where you've gone in a web browser</td>
+                        <td class="answer-text">history</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">POETS & POETRY</td>
+                        <td class="clue-value">DD: $6,200</td>
+                        <td class="clue-text">Her poem No. 288 asks, "I'm Nobody!  Who are you?  Are you--Nobody--too?"</td>
+                        <td class="answer-text">Emily Dickinson</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPUTER STUFF</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Before a game's release, Joe Gamer may be asked to play a pre-version usually referred to by this Greek letter</td>
+                        <td class="answer-text">beta</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEENS RULE</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">She was just 18 when she became queen consort of France in 1774</td>
+                        <td class="answer-text">Marie Antoinette</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">COMPUTER STUFF</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">You may have worked with a newfangled cash register called a POS terminal, the POS standing for this</td>
+                        <td class="answer-text">point of sale</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">POETS & POETRY</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">The first stanza of this poem mentions "Some visitor... tapping at my chamber door--only this and nothing more"</td>
+                        <td class="answer-text">"The Raven"</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">AT THE GEORGIA AQUARIUM</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">(Sarah of the Clue Crew reports from the Georgia Aquarium.)  Bottlenose dolphins can make up to 1,000 clicks per second during this process that bounces sound waves off targets</td>
+                        <td class="answer-text">echolocation</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">4-SYLLABLE WORDS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">The proverbially soft or vulnerable part of the body exposed here</td>
+                        <td class="answer-text">the underbelly</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">OLD TESTAMENT HEROES</td>
+                        <td class="clue-value">DD: $1,000</td>
+                        <td class="clue-text">When presented with this son's bloodstained coat, Jacob assumed that "an evil beast hath devoured him"</td>
+                        <td class="answer-text">Joseph</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEENS RULE</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">This queen of Scots was briefly the queen consort of France--until she became a widow at 17</td>
+                        <td class="answer-text">Mary, Queen of Scots</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">AT THE GEORGIA AQUARIUM</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">(Sarah of the Clue Crew reports from the Georgia Aquarium.)  Sea otters have up to a million hairs of fur per square inch, important, as they don't rely on this as an insulator, unlike a sperm whale</td>
+                        <td class="answer-text">blubber</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">GRAPHIC NOVEL ADAPTATIONS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">A comic arc subtitled "God Loves, Man Kills" was the partial basis for this supergroup's "United" movie</td>
+                        <td class="answer-text">the X-Men</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">OLD TESTAMENT HEROES</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">When he came to present the Israelites with the tablets of the law, they were dancing around a golden calf</td>
+                        <td class="answer-text">Moses</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">TEENS RULE</td>
+                        <td class="clue-value">DD: $3,000</td>
+                        <td class="clue-text">Juan II, a feeble teenage king of Castile in the 1420s, is best remembered as this queen's father</td>
+                        <td class="answer-text">Isabella of Castile</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">OLD TESTAMENT HEROES</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">This prophet "prayed unto the Lord his god out of the fish's belly"</td>
+                        <td class="answer-text">Jonah</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">GRAPHIC NOVEL ADAPTATIONS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">On film Chris Evans & Jeffrey Dean Morgan eschewed capes & masks in this movie based on a Vertigo mercenary team</td>
+                        <td class="answer-text">The Losers</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">"MAC" OR "P.C."</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">"Holy" this fish whose king species may lay several million eggs during spawning season</td>
+                        <td class="answer-text">a mackerel</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">4-SYLLABLE WORDS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">This word, the "S" in ASPCA, squeezes 4 syllables into just 7 letters</td>
+                        <td class="answer-text">Society</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">"MAC" OR "P.C."</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">This vehicle is also called a "black & white"</td>
+                        <td class="answer-text">a police cruiser</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">CROSSWORD CLUES "Q"</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">To satisfy one's thirst(6)</td>
+                        <td class="answer-text">quench</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">"MAC" OR "P.C."</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">American World War II general who was known as the "Napoleon of Luzon"</td>
+                        <td class="answer-text">Douglas MacArthur</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">CROSSWORD CLUES "Q"</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">A sticky situation or boggy ground(8)</td>
+                        <td class="answer-text">quagmire</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="J">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">"MAC" OR "P.C."</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">This Seattle mastermind is one of the three coaches to win a college national championship and a Super Bowl</td>
+                        <td class="answer-text">Pete Carroll</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6892" data-dj="DJ">
+                        <td class="small text-secondary">#6892</td>
+                        <td class="category-name">SOUTH AMERICA</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">This country's Ponta do Seixas is South America's easternmost point</td>
+                        <td class="answer-text">Brazil</td>
+                        <td class="small text-secondary">2014-07-29</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">PLAYWRONGS</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Wilde:"The Importance of Being Alex"</td>
+                        <td class="answer-text">The Importance of Being Earnest</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">21st CENTURY NEWS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">In 2010 this 4-year-old website published classified U.S. war documents & diplomatic cables</td>
+                        <td class="answer-text">WikiLeaks</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">LET'S VISIT D.C.</td>
+                        <td class="clue-value">DD: $1,600</td>
+                        <td class="clue-text">Though he didn't even live to see 1777, he is honored with a statue for his contribution to the American Revolution</td>
+                        <td class="answer-text">Nathan Hale</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CHEMICAL ELEMENTS</td>
+                        <td class="clue-value">DD: $2,200</td>
+                        <td class="clue-text">The Roman numeral for 100 is also the symbol for this element</td>
+                        <td class="answer-text">carbon</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">TV</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Single dad Juan Pablo was looking for Ms. Right on the latest edition of this reality series</td>
+                        <td class="answer-text">The Bachelor</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">MIDDLE A</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">Don't hate this Spanish word for "beach"; hate the game</td>
+                        <td class="answer-text">playa</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">TV</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">On a 2013 episode of "Family Guy", this dog died but returned a few episodes later in a Christmas miracle</td>
+                        <td class="answer-text">Brian</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">MIDDLE A</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">This Navy rank just below captain sure sounds like it knows how to give orders</td>
+                        <td class="answer-text">commander</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">TV</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">"Pretty Little Liars" is set in Rosewood, Penn.; another ABC family drama is set in this nearby title town, home of a curse</td>
+                        <td class="answer-text">Ravenswood</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">MIDDLE A</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Japanese massage technique using acupressure</td>
+                        <td class="answer-text">shiatsu</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">TV</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">The "secret" that Shailene Woodley had in the first few episodes of this series: she was pregnant</td>
+                        <td class="answer-text">The Secret Life of the American Teenager</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">21st CENTURY NEWS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">A volcano called Eyjafjallajokull erupted in this island nation in 2010, leading to a disruption of air travel</td>
+                        <td class="answer-text">Iceland</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">TV</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Rachel Bilson plays Dr. Zoe Hart on this Southern-fried show</td>
+                        <td class="answer-text">Hart of Dixie</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">THE GEOGRAPHIC CENTER</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Of this U.S. state: central Worcester County</td>
+                        <td class="answer-text">Massachusetts</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">FOOD, FAST & SLOW</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Martha Stewart's quick way to make these eggs is to remove them from the water just as it starts to boil</td>
+                        <td class="answer-text">soft-boiled eggs</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">THE GEOGRAPHIC CENTER</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Of this continent: the city of Cuiaba in the state of Mato Grosso</td>
+                        <td class="answer-text">South America</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">FOOD, FAST & SLOW</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">As a noun, it's a burger garnish; as a verb, it's to preserve, say, pigs' feet through a long, briny process</td>
+                        <td class="answer-text">pickle</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">THE GEOGRAPHIC CENTER</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">Of this continent: in the south of the Northern Territory</td>
+                        <td class="answer-text">Australia</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">FOOD, FAST & SLOW</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">This "pudgy" turkey company's website says a stuffed 25-pound bird can take more than 6 hours to cook</td>
+                        <td class="answer-text">Butterball</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">THE GEOGRAPHIC CENTER</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">Of this peninsula: near Madrid</td>
+                        <td class="answer-text">Iberian</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">FOOD, FAST & SLOW</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">A couple of minutes in the microwavable sleeve makes these Nestle meat & cheese sandwiches</td>
+                        <td class="answer-text">Hot Pocket</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">THE GEOGRAPHIC CENTER</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">Of this big country: Evenkia, on Lake Vivi; its only resident, Anatoly, died in 2003</td>
+                        <td class="answer-text">Russia</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">PLAYWRONGS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Albee:"Who's Afraid of Montana Foxx?"</td>
+                        <td class="answer-text">Who's Afraid of Virginia Woolf?</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">21st CENTURY NEWS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Pope when you were born, he died in 2005</td>
+                        <td class="answer-text">John Paul II</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">FOOD, FAST & SLOW</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">In the morning, you can have instant this from Quaker or the slow-cooked steel-cut kind</td>
+                        <td class="answer-text">oatmeal</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CHEMICAL ELEMENTS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">This glow-in-the-dark element is the only one whose name ends in "us"</td>
+                        <td class="answer-text">phosphorus</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">SHOP CLASS</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">Shop class has gone high-tech with skills like using these semiconductor devices that work like tiny bulbs</td>
+                        <td class="answer-text">LEDs</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CHEMICAL ELEMENTS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">After "Omaha" or "Lincoln", an addressed envelope could have the 2 letters symbolizing this element</td>
+                        <td class="answer-text">Neon</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">DOUBLE TALK</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">A cheerleader wields it</td>
+                        <td class="answer-text">pompom</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CELEBRITIES</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">As opposed to JLo, she's JLaw</td>
+                        <td class="answer-text">Jennifer Lawrence</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">DOUBLE TALK</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">We hope kids never stop "walking the dog" & going "around the world" with this toy</td>
+                        <td class="answer-text">a yo-yo</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CHEMICAL ELEMENTS</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">The name of ununoctium may lead you to this atomic number, the highest yet assigned</td>
+                        <td class="answer-text">118</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">DOUBLE TALK</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">To mean an equal chance, you could say 1 to 1, but most people use this number combination</td>
+                        <td class="answer-text">50-50</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CELEBRITIES</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">This father & son co-starred in 2013's "After Earth"</td>
+                        <td class="answer-text">Will and Jaden Smith</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">DOUBLE TALK</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">A small round projectile fired from an air gun</td>
+                        <td class="answer-text">BB</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CELEBRITIES</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">On this co-star's untimely death, Vin Diesel said, "I will always love you... as the brother you were... on and off screen"</td>
+                        <td class="answer-text">Paul Walker</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">DOUBLE TALK</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">As seen here, strange juxtapositions were the norm for this "fatherly" early 20th century art movement</td>
+                        <td class="answer-text">Dada</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CELEBRITIES</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">In 2014 this actress & Ashton Kutcher announced their engagement</td>
+                        <td class="answer-text">Mila Kunis</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">SHOP CLASS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">The protective helmet seen here is named for this task of fusing metal together</td>
+                        <td class="answer-text">welding</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CELEBRITIES</td>
+                        <td class="clue-value">$2000</td>
+                        <td class="clue-text">In 2013 this singer became a new mom, giving birth to son Axl Jack Duhamel</td>
+                        <td class="answer-text">Fergie</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">SHOP CLASS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Woodshop is safer with Stephen Gass' device that can stop a spinning one of these in 3/1,000 of a second</td>
+                        <td class="answer-text">saw</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">STAMPS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">The "Made in America" series shows a riveter & a welder working on this Manhattan skyscraper</td>
+                        <td class="answer-text">Empire State Building</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">SHOP CLASS</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Appropriately, this retailer opened its first store on the 21st of April, 1984--oops, that's for shopping class, not shop class</td>
+                        <td class="answer-text">Forever 21</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">STAMPS</td>
+                        <td class="clue-value">DD: $2,000</td>
+                        <td class="clue-text">A stamp commemorating the War of 1812 features the Battle of this lake</td>
+                        <td class="answer-text">Lake Erie</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">PLAYWRONGS</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Simon:"Brighton Beach Mammoths"</td>
+                        <td class="answer-text">Brighton Beach Memoirs</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">21st CENTURY NEWS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">This Asian company surpassed Nokia as the world's largest mobile phone maker</td>
+                        <td class="answer-text">Samsung</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">SHOP CLASS</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">Ordinary scissors won't cut metal; you need snips, also known by this "sh" word</td>
+                        <td class="answer-text">shears</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">STAMPS</td>
+                        <td class="clue-value">$1200</td>
+                        <td class="clue-text">You can see the quiet dignity of this civil rights icon who took a back seat to no one</td>
+                        <td class="answer-text">Rosa Parks</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">PLAYWRONGS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Sartre:"Next Exit"</td>
+                        <td class="answer-text">No Exit</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">21st CENTURY NEWS</td>
+                        <td class="clue-value">$1600</td>
+                        <td class="clue-text">In 2007 Israel bombed a Syrian site that intelligence showed was one of these built with North Korean help</td>
+                        <td class="answer-text">nuclear reactor</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">PLAYWRONGS</td>
+                        <td class="clue-value">$1000</td>
+                        <td class="clue-text">Shaw:"Arms and the Leg"</td>
+                        <td class="answer-text">Arms and the Man</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">STAMPS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">It's a flag! It's an anthem! It's a patriotic stamp</td>
+                        <td class="answer-text">the "Star-Spangled Banner" stamp</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">LET'S VISIT D.C.</td>
+                        <td class="clue-value">$200</td>
+                        <td class="clue-text">The memorial to this man was dedicated on April 13, 1943, the 200th anniversary of his birth</td>
+                        <td class="answer-text">Thomas Jefferson</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">STAMPS</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">A circular holiday stamp depicts an evergreen one of these decorations</td>
+                        <td class="answer-text">wreath</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">LET'S VISIT D.C.</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">Seen here at holiday time,the Red Room in this landmark is often used for parties</td>
+                        <td class="answer-text">White House</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">MIDDLE A</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">A big bunch of buzzin' bees</td>
+                        <td class="answer-text">swarm</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">LET'S VISIT D.C.</td>
+                        <td class="clue-value">$600</td>
+                        <td class="clue-text">In 2010, six names were added to the memorial for veterans of this war, bringing the total to 58,272</td>
+                        <td class="answer-text">Vietnam War</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">MIDDLE A</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Wannabe lawyers try to pass the exam commonly called this</td>
+                        <td class="answer-text">bar</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="J">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">LET'S VISIT D.C.</td>
+                        <td class="clue-value">$800</td>
+                        <td class="clue-text">Here's the view from this D.C. landmark completed in 1884</td>
+                        <td class="answer-text">Washington Monument</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                    <tr data-episode="6891" data-dj="DJ">
+                        <td class="small text-secondary">#6891</td>
+                        <td class="category-name">CHEMICAL ELEMENTS</td>
+                        <td class="clue-value">$400</td>
+                        <td class="clue-text">By mass, it's the most abundant element in the Earth's crust & in your body</td>
+                        <td class="answer-text">oxygen</td>
+                        <td class="small text-secondary">2014-07-28</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const episodeFilter = document.getElementById('episodeFilter');
+        const roundFilter = document.getElementById('roundFilter');
+        const table = document.getElementById('cluesTable');
+        const rows = table.getElementsByTagName('tr');
+        const totalBadge = document.getElementById('totalBadge');
+
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedEpisode = episodeFilter.value;
+            const selectedRound = roundFilter.value;
+            let visibleCount = 0;
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                const rowEpisode = row.getAttribute('data-episode');
+                const rowRound = row.getAttribute('data-dj');
+                
+                let textMatch = false;
+                for (let j = 0; j < cells.length; j++) {
+                    if (cells[j].textContent.toLowerCase().includes(searchTerm)) {
+                        textMatch = true;
+                        break;
+                    }
+                }
+
+                const episodeMatch = selectedEpisode === 'all' || rowEpisode === selectedEpisode;
+                const roundMatch = selectedRound === 'all' || rowRound === selectedRound;
+
+                if (textMatch && episodeMatch && roundMatch) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+            totalBadge.textContent = `Showing: ${visibleCount}`;
+        }
+
+        searchInput.addEventListener('keyup', filterTable);
+        episodeFilter.addEventListener('change', filterTable);
+        roundFilter.addEventListener('change', filterTable);
+    </script>
+</body>
+</html>

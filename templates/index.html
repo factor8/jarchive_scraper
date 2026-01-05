@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J-Archive Scraper Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --header-bg: #1e3a8a;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --accent-gold: #fbbf24;
+            --border-color: #334155;
+            --stripe-bg: rgba(255, 255, 255, 0.03);
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        h1 {
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 0;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .search-box {
+            margin-bottom: 30px;
+        }
+        .form-control {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 12px;
+        }
+        .form-control:focus {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+        }
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .table-responsive {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: var(--card-bg);
+        }
+        
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--text-primary);
+            --bs-table-striped-bg: var(--stripe-bg);
+            --bs-table-striped-color: var(--text-primary);
+            margin-bottom: 0;
+            border-color: var(--border-color);
+        }
+        
+        .table thead th {
+            background-color: var(--header-bg);
+            border-bottom: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            padding: 16px;
+            color: #fff;
+        }
+        
+        .table tbody td {
+            padding: 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .category-name {
+            font-weight: 700;
+            color: #60a5fa; /* Light blue */
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        .clue-value {
+            color: var(--accent-gold);
+            font-weight: 800;
+            font-size: 1.2rem;
+            font-family: 'Georgia', serif; /* Slight nod to classic feel */
+        }
+        
+        .clue-text {
+            font-size: 1rem;
+            line-height: 1.5;
+            text-transform: none;
+            font-weight: normal;
+            text-shadow: none;
+        }
+        
+        .answer-text {
+            color: var(--text-secondary);
+            font-family: monospace;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-style: normal;
+        }
+        
+        .badge {
+            background-color: var(--accent-gold) !important;
+            color: #000;
+            font-weight: 600;
+            border: none;
+        }
+        th.sortable {
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        th.sortable:hover {
+            background-color: #2563eb !important;
+        }
+        th.sortable::after {
+            content: '↕';
+            position: absolute;
+            right: 8px;
+            opacity: 0.3;
+        }
+        th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+            color: var(--accent-gold);
+        }
+        th.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+            color: var(--accent-gold);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Jeopardy! Clues</h1>
+            <span class="badge bg-primary" id="totalBadge">Total: {{ clues|length }}</span>
+        </div>
+
+        <div class="row mb-4 g-3">
+            <div class="col-md-3">
+                <label class="form-label text-secondary small text-uppercase fw-bold">Season</label>
+                <select id="seasonFilter" class="form-select form-control">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-secondary small text-uppercase fw-bold">Episode</label>
+                <select id="episodeFilter" class="form-select form-control">
+                    <option value="all">All Episodes</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-secondary small text-uppercase fw-bold">Round</label>
+                <select id="roundFilter" class="form-select form-control">
+                    <option value="all">All Rounds</option>
+                    <option value="J">Jeopardy!</option>
+                    <option value="DJ">Double Jeopardy!</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-secondary small text-uppercase fw-bold">Search</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="Keywords...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered" id="cluesTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="episode">Ep</th>
+                        <th class="sortable" data-sort="category">Category</th>
+                        <th class="sortable" data-sort="dollar_value">Value</th>
+                        <th class="sortable" data-sort="text">Clue</th>
+                        <th class="sortable" data-sort="answer">Answer</th>
+                        <th class="sortable" data-sort="contestant">Contestant</th>
+                    </tr>
+                </thead>
+                <tbody id="cluesBody">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allClues = [];
+        let currentSort = { column: 'episode', direction: 'desc' };
+        
+        const seasonFilter = document.getElementById('seasonFilter');
+        const episodeFilter = document.getElementById('episodeFilter');
+        const roundFilter = document.getElementById('roundFilter');
+        const searchInput = document.getElementById('searchInput');
+        const cluesBody = document.getElementById('cluesBody');
+        const totalBadge = document.getElementById('totalBadge');
+
+        // 1. Load Seasons on startup
+        async function init() {
+            try {
+                const resp = await fetch('data/seasons.json');
+                const seasons = await resp.json();
+                
+                seasonFilter.innerHTML = seasons.map(s => 
+                    `<option value="${s.season}">Season ${s.season}</option>`
+                ).join('');
+                
+                // Load the first season by default
+                if (seasons.length > 0) {
+                    loadSeason(seasons[0].season);
+                }
+            } catch (e) {
+                console.error("Failed to load seasons", e);
+            }
+        }
+
+        // 2. Load Season Data
+        async function loadSeason(seasonNum) {
+            cluesBody.innerHTML = '<tr><td colspan="6" class="text-center p-5">Loading Season Data...</td></tr>';
+            
+            try {
+                const resp = await fetch(`data/season_${seasonNum}.json`);
+                const data = await resp.json();
+                
+                allClues = data.clues;
+                
+                // Update Episode Filter
+                episodeFilter.innerHTML = '<option value="all">All Episodes</option>' + 
+                    data.episodes.map(ep => 
+                        `<option value="${ep.episode}">#${ep.episode} (${ep.formatted_date})</option>`
+                    ).join('');
+                
+                renderTable();
+            } catch (e) {
+                console.error("Failed to load season data", e);
+                cluesBody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-danger">Error loading data.</td></tr>';
+            }
+        }
+
+        // 3. Render Table based on filters and sort
+        function renderTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedEpisode = episodeFilter.value;
+            const selectedRound = roundFilter.value;
+            
+            let filtered = allClues.filter(c => {
+                const textMatch = !searchTerm || 
+                    c.text.toLowerCase().includes(searchTerm) || 
+                    c.answer.toLowerCase().includes(searchTerm) || 
+                    c.category.toLowerCase().includes(searchTerm) ||
+                    c.contestant.toLowerCase().includes(searchTerm);
+                
+                const episodeMatch = selectedEpisode === 'all' || c.episode === selectedEpisode;
+                const roundMatch = selectedRound === 'all' || (selectedRound === 'DJ' ? c.dj : !c.dj);
+                
+                return textMatch && episodeMatch && roundMatch;
+            });
+
+            // Apply Sorting
+            filtered.sort((a, b) => {
+                let valA = a[currentSort.column];
+                let valB = b[currentSort.column];
+
+                // Special handling for dollar values
+                if (currentSort.column === 'dollar_value') {
+                    valA = parseInt(valA.replace(/[^0-9]/g, '')) || 0;
+                    valB = parseInt(valB.replace(/[^0-9]/g, '')) || 0;
+                }
+
+                if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            cluesBody.innerHTML = filtered.map(c => `
+                <tr class="${c.triple_stumper ? 'opacity-75' : ''}">
+                    <td class="small text-secondary">#${c.episode}</td>
+                    <td class="category-name">${c.category}</td>
+                    <td class="clue-value">${c.dollar_value}</td>
+                    <td class="clue-text">${c.text}</td>
+                    <td class="answer-text">${c.answer}</td>
+                    <td class="small ${c.triple_stumper ? 'text-danger' : 'text-info'}">${c.contestant}</td>
+                </tr>
+            `).join('');
+
+            totalBadge.textContent = `Showing: ${filtered.length}`;
+            updateSortIcons();
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (th.dataset.sort === currentSort.column) {
+                    th.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        // Event Listeners
+        seasonFilter.addEventListener('change', (e) => loadSeason(e.target.value));
+        episodeFilter.addEventListener('change', renderTable);
+        roundFilter.addEventListener('change', renderTable);
+        searchInput.addEventListener('input', renderTable);
+
+        document.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.dataset.sort;
+                if (currentSort.column === column) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.direction = 'asc';
+                }
+                renderTable();
+            });
+        });
+
+        init();
+    </script>
+</body>
+</html>

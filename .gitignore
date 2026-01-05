@@ -1,2 +1,10 @@
 # Ignore output of scraper
 data.sqlite
+jarchive.db
+cache/
+__pycache__/
+*.pyc
+.venv/
+
+*.agent
+data/*
