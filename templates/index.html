@@ -147,6 +147,131 @@
             opacity: 1;
             color: var(--accent-gold);
         }
+        
+        /* Pagination Styles */
+        .pagination-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        .pagination {
+            margin-bottom: 0;
+            gap: 5px;
+        }
+        .page-link {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px !important;
+            padding: 8px 16px;
+            transition: all 0.2s;
+        }
+        .page-link:hover {
+            background-color: var(--header-bg);
+            color: #fff;
+            border-color: var(--header-bg);
+        }
+        .page-item.active .page-link {
+            background-color: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: #000;
+            font-weight: 700;
+        }
+        .page-item.disabled .page-link {
+            background-color: rgba(255,255,255,0.05);
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .table-responsive {
+                border: none;
+                background: transparent;
+                box-shadow: none;
+            }
+            .table thead {
+                display: none; /* Hide headers on mobile */
+            }
+            .table tbody tr {
+                display: block;
+                border-radius: 12px;
+                margin-bottom: 15px;
+                padding: 15px;
+                border: 1px solid var(--border-color);
+            }
+            .table tbody tr:nth-child(odd) {
+                background-color: var(--card-bg) !important;
+            }
+            .table tbody tr:nth-child(even) {
+                background-color: #161e2e !important; /* Slightly darker than card-bg */
+            }
+            .table tbody td {
+                display: block;
+                padding: 8px 0;
+                border: none;
+                text-align: left;
+                background-color: transparent !important; /* Override Bootstrap striping */
+                --bs-table-accent-bg: transparent !important;
+                --bs-table-bg-type: transparent !important;
+            }
+            .table tbody td:first-child {
+                display: inline-block;
+                font-weight: bold;
+                color: var(--text-secondary);
+                margin-right: 10px;
+            }
+            .table tbody td:nth-child(3) { /* Value */
+                display: inline-block;
+                float: right;
+            }
+            .table tbody td:nth-child(2) { /* Category */
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            .table tbody td:last-child { /* Contestant */
+                border-top: 1px solid var(--border-color);
+                margin-top: 10px;
+                padding-top: 10px;
+                font-size: 0.85rem;
+            }
+            
+            /* Labels for mobile */
+            .table tbody td[data-label]::before {
+                content: attr(data-label) ": ";
+                font-weight: 700;
+                text-transform: uppercase;
+                font-size: 0.7rem;
+                color: var(--text-secondary);
+                display: block;
+                margin-bottom: 2px;
+            }
+            
+            /* Hide labels for things that are obvious */
+            .table tbody td:nth-child(1)::before,
+            .table tbody td:nth-child(2)::before,
+            .table tbody td:nth-child(3)::before {
+                display: none;
+            }
+
+            .pagination-container {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -200,11 +325,24 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="pagination-container">
+            <div class="text-secondary small" id="paginationInfo">
+                Showing 0 to 0 of 0 entries
+            </div>
+            <nav>
+                <ul class="pagination" id="paginationControls">
+                    <!-- Pagination buttons will be injected here -->
+                </ul>
+            </nav>
+        </div>
     </div>
 
     <script>
         let allClues = [];
         let currentSort = { column: 'episode', direction: 'desc' };
+        let currentPage = 1;
+        const pageSize = 50;
         
         const seasonFilter = document.getElementById('seasonFilter');
         const episodeFilter = document.getElementById('episodeFilter');
@@ -212,6 +350,8 @@
         const searchInput = document.getElementById('searchInput');
         const cluesBody = document.getElementById('cluesBody');
         const totalBadge = document.getElementById('totalBadge');
+        const paginationControls = document.getElementById('paginationControls');
+        const paginationInfo = document.getElementById('paginationInfo');
 
         // 1. Load Seasons on startup
         async function init() {
@@ -290,19 +430,77 @@
                 return 0;
             });
 
-            cluesBody.innerHTML = filtered.map(c => `
+            // Pagination Logic
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / pageSize);
+            
+            // Ensure current page is valid
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+            
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const paginatedItems = filtered.slice(start, end);
+
+            cluesBody.innerHTML = paginatedItems.map(c => `
                 <tr class="${c.triple_stumper ? 'opacity-75' : ''}">
                     <td class="small text-secondary">#${c.episode}</td>
                     <td class="category-name">${c.category}</td>
                     <td class="clue-value">${c.dollar_value}</td>
-                    <td class="clue-text">${c.text}</td>
-                    <td class="answer-text">${c.answer}</td>
-                    <td class="small ${c.triple_stumper ? 'text-danger' : 'text-info'}">${c.contestant}</td>
+                    <td class="clue-text" data-label="Clue">${c.text}</td>
+                    <td class="answer-text" data-label="Answer">${c.answer}</td>
+                    <td class="small ${c.triple_stumper ? 'text-danger' : 'text-info'}" data-label="Contestant">${c.contestant}</td>
                 </tr>
             `).join('');
 
-            totalBadge.textContent = `Showing: ${filtered.length}`;
+            totalBadge.textContent = `Showing: ${totalItems}`;
+            paginationInfo.textContent = `Showing ${totalItems > 0 ? start + 1 : 0} to ${Math.min(end, totalItems)} of ${totalItems} entries`;
+            
+            renderPagination(totalPages);
             updateSortIcons();
+        }
+
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) {
+                paginationControls.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            
+            // Previous Button
+            html += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Previous</a>
+                </li>
+            `;
+
+            // Page Numbers (Simplified: show first, last, and current +/- 2)
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `
+                        <li class="page-item ${currentPage === i ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                        </li>
+                    `;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            // Next Button
+            html += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a>
+                </li>
+            `;
+
+            paginationControls.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderTable();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateSortIcons() {
@@ -315,10 +513,22 @@
         }
 
         // Event Listeners
-        seasonFilter.addEventListener('change', (e) => loadSeason(e.target.value));
-        episodeFilter.addEventListener('change', renderTable);
-        roundFilter.addEventListener('change', renderTable);
-        searchInput.addEventListener('input', renderTable);
+        seasonFilter.addEventListener('change', (e) => {
+            currentPage = 1;
+            loadSeason(e.target.value);
+        });
+        episodeFilter.addEventListener('change', () => {
+            currentPage = 1;
+            renderTable();
+        });
+        roundFilter.addEventListener('change', () => {
+            currentPage = 1;
+            renderTable();
+        });
+        searchInput.addEventListener('input', () => {
+            currentPage = 1;
+            renderTable();
+        });
 
         document.querySelectorAll('th.sortable').forEach(th => {
             th.addEventListener('click', () => {

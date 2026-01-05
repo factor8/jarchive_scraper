@@ -93,25 +93,38 @@ def get_soup(url):
         print(f"Error fetching {url}: {e}")
         return None
 
-def scrape_all_seasons(url):
-    soup = get_soup(url)
-    if not soup: return
+def get_seasons_list():
+    soup = get_soup(SEASONS_URL)
+    if not soup: return []
 
-    # Grab all of the seasons listed
     content = soup.find('div', {"id":"content"})
-    if not content: return
+    if not content: return []
     
-    seasons = content.find_all('a')
-    for season in seasons:
-        href = season.get('href')
-        if href:
-            scrape_season(BASE_URL + href)
+    seasons = []
+    links = content.find_all('a')
+    for link in links:
+        href = link.get('href')
+        if href and 'season=' in href:
+            season_match = re.search(r'season=(\w+)', href)
+            season_num = season_match.group(1) if season_match else "Unknown"
+            seasons.append({
+                'number': season_num,
+                'url': BASE_URL + href
+            })
+    return seasons
+
+def get_episodes_in_db(season_num):
+    conn = get_db_connection()
+    episodes = conn.execute('SELECT DISTINCT episode FROM clues WHERE season = ?', (season_num,)).fetchall()
+    conn.close()
+    return [row['episode'] for row in episodes]
 
 def scrape_season(url, limit=None):
     # Extract season number from URL (e.g., season=30)
     season_match = re.search(r'season=(\w+)', url)
     season_num = season_match.group(1) if season_match else "Unknown"
 
+    print(f"Checking Season {season_num}...")
     soup = get_soup(url)
     if not soup: return
 
@@ -121,7 +134,11 @@ def scrape_season(url, limit=None):
     
     episodes = content.find_all('a', {"href": re.compile(r'showgame\.php')})
     
+    # Get existing episodes to avoid re-scraping
+    existing_episodes = get_episodes_in_db(season_num)
+    
     count = 0
+    new_episodes = 0
     for episode in episodes:
         if limit is not None and count >= limit:
             break
@@ -133,6 +150,9 @@ def scrape_season(url, limit=None):
         # ep_num extraction: "#6895" -> "6895"
         match_ep = re.search(r'#(\d+)', ep_data[0])
         ep_num = match_ep.group(1) if match_ep else ep_data[0].strip()
+
+        if ep_num in existing_episodes:
+            continue
 
         # air_date extraction
         try:
@@ -147,10 +167,69 @@ def scrape_season(url, limit=None):
                 if href:
                     scrape_episode(href, ep_num, season_num, timestamp)
                     count += 1
+                    new_episodes += 1
             else:
                 print(f"Could not parse date from {date_str}")
         except Exception as e:
             print(f"Error parsing episode data for {text}: {e}")
+    
+    if new_episodes == 0:
+        print(f"Season {season_num} is already up to date.")
+    else:
+        print(f"Finished scraping {new_episodes} new episodes for Season {season_num}.")
+
+def run_incremental_scrape():
+    print("Checking for next season to scrape...")
+    seasons = get_seasons_list()
+    if not seasons:
+        print("Could not fetch seasons list.")
+        return
+
+    conn = get_db_connection()
+    existing_seasons = [row['season'] for row in conn.execute('SELECT DISTINCT season FROM clues').fetchall()]
+    conn.close()
+    
+    # Sort seasons by number (numeric if possible)
+    def season_key(s):
+        try: return int(s['number'])
+        except: return 0
+    
+    seasons.sort(key=season_key, reverse=True) # Newest first
+    
+    target_season = None
+    
+    # 1. Check for incomplete seasons
+    for s in seasons:
+        if s['number'] in existing_seasons:
+            soup = get_soup(s['url'])
+            if not soup: continue
+            content = soup.find('div', {"id":"content"})
+            if not content: continue
+            expected_episodes = len(content.find_all('a', {"href": re.compile(r'showgame\.php')}))
+            
+            actual_episodes = len(get_episodes_in_db(s['number']))
+            
+            if actual_episodes < expected_episodes:
+                print(f"Season {s['number']} is incomplete ({actual_episodes}/{expected_episodes}). Resuming...")
+                target_season = s
+                break
+    
+    # 2. If no incomplete seasons, find the next one we haven't started
+    if not target_season:
+        if not existing_seasons:
+            target_season = seasons[0] # Start with the newest if empty
+        else:
+            for s in seasons:
+                if s['number'] not in existing_seasons:
+                    target_season = s
+                    break
+                    
+    if target_season:
+        print(f"Targeting Season {target_season['number']}...")
+        scrape_season(target_season['url'])
+        export_site()
+    else:
+        print("All seasons appear to be scraped and up to date!")
 
 def scrape_episode(url, episode_num, season_num, air_date):
     if not url.startswith('http'):
@@ -306,16 +385,19 @@ def export_site():
     with open(os.path.join(DIST_DIR, 'index.html'), 'w', encoding='utf-8') as f:
         f.write(output)
         
+    conn = get_db_connection()
     total_clues = conn.execute('SELECT COUNT(*) FROM clues').fetchone()[0]
+    conn.close()
     print(f"Export complete! Site is in the '{DIST_DIR}' directory.")
     print(f"Database Status: {total_clues} total clues stored in {DB_NAME}")
 
 if __name__ == "__main__":
     init_db()
-    # Scrape Season 31 (One season at a time as requested)
-    print("Starting scrape of Season 31...")
-    scrape_season(BASE_URL + "showseason.php?season=31")
-    export_site()
+    
+    if len(sys.argv) > 1 and sys.argv[1] == "--export":
+        export_site()
+    else:
+        run_incremental_scrape()
 
 
 
